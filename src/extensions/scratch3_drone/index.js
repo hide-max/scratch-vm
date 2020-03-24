@@ -17,7 +17,16 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYA
  */
 // eslint-disable-next-line max-len
 const menuIconURI = blockIconURI;
-
+const LabeledCommandType = {
+    FORWARD: 'forward',
+    BACK: 'back',
+    UP: 'up',
+    DOWN: 'down',
+    LEFT: 'left',
+    RIGHT: 'right',
+    CW: 'cw',
+    CCW: 'ccw'
+};
 /**
  * Class for the new blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
@@ -50,6 +59,7 @@ class Scratch3DroneBlocks {
             name: 'Drone Blocks',
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
+            showStatusButton: true,
             blocks: [
                 {
                     opcode: 'openDrone',
@@ -98,6 +108,26 @@ class Scratch3DroneBlocks {
                     }
                 },
                 {
+                	opcode: 'sendDroneLabeledCommand',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'websockets.sendDroneLabeledCommand',
+                        default: 'Command [COMMAND_ID] Distance/Angle [DISTANCE] cm/deg',
+                        description: 'Send labeled command through the socket.'
+                    }),
+                    arguments: {
+                        COMMAND_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'COMMAND_ID',
+                            defaultValue: LabeledCommandType.FORWARD
+                        },
+                        DISTANCE: {
+                            type:  ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
                 	opcode: 'getDroneData',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -108,6 +138,43 @@ class Scratch3DroneBlocks {
                 },
             ],
             menus: {
+                COMMAND_ID: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: 'forward',
+                            value: LabeledCommandType.FORWARD
+                        },
+                        {
+                            text: 'back',
+                            value: LabeledCommandType.BACK
+                        },
+                        {
+                            text: 'up',
+                            value: LabeledCommandType.UP
+                        },
+                        {
+                            text: 'down',
+                            value: LabeledCommandType.DOWN
+                        },
+                        {
+                            text: 'left',
+                            value: LabeledCommandType.LEFT
+                        },
+                        {
+                            text: 'right',
+                            value: LabeledCommandType.RIGHT
+                        },
+                        {
+                            text: 'cw',
+                            value: LabeledCommandType.CW
+                        },
+                        {
+                            text: 'ccw',
+                            value: LabeledCommandType.CCW
+                        }
+                    ]
+                }
             }
         };
     }
@@ -174,7 +241,19 @@ class Scratch3DroneBlocks {
             };
     	}
     }
-
+    sendDroneLabeledCommand (args) {
+    	if (this.isRunning == true) {
+            var command = args.COMMAND_ID + ' ' + String(Math.round(Math.abs(args.DISTANCE)));
+    		this.mWS.send(command);
+    		console.log("SENT:", args.COMMAND_ID, args.DISTANCE);
+//            this.mWS.send('battery?');
+            const self = this;
+            var message = this.mWS.onmessage = function(event){
+       		    self.socketData = String(event.data);
+       		    console.log("RECEIVED:", self.socketData);
+            };
+    	}
+    }
     getDroneData () {
     	//Check is the server is still running
 //        var message = this.mWS.onmessage = function(event){
