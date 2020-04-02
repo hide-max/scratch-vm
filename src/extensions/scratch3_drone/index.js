@@ -227,33 +227,30 @@ class Scratch3DroneBlocks {
     		}
     	}
     	return this.isRunning;
-    	}
+    }
 
     sendDroneCommand (args) {
     	if (this.isRunning == true) {
     		this.mWS.send(args.DATA);
     		console.log("SENT:", args.DATA);
-//            this.mWS.send('battery?');
-            const self = this;
-            var message = this.mWS.onmessage = function(event){
-       		    self.socketData = String(event.data);
-       		    console.log("RECEIVED:", self.socketData);
-            };
+            if (args.DATA == 'command') {
+                const self = this;
+                var message = this.mWS.onmessage = function(event){
+                    self.socketData = String(event.data);
+                    console.log("RECEIVED:", self.socketData);
+                };
+            }
     	}
     }
+
     sendDroneLabeledCommand (args) {
     	if (this.isRunning == true) {
             var command = args.COMMAND_ID + ' ' + String(Math.round(Math.abs(args.DISTANCE)));
     		this.mWS.send(command);
     		console.log("SENT:", args.COMMAND_ID, args.DISTANCE);
-//            this.mWS.send('battery?');
-            const self = this;
-            var message = this.mWS.onmessage = function(event){
-       		    self.socketData = String(event.data);
-       		    console.log("RECEIVED:", self.socketData);
-            };
     	}
     }
+
     getDroneData () {
     	//Check is the server is still running
 //        var message = this.mWS.onmessage = function(event){
